@@ -13,21 +13,36 @@ func Handler(w http.ResponseWriter, r *http.Request) {
 	// Set response header to JSON
 	w.Header().Set("Content-Type", "application/json")
 
-	// Only allow GET requests
-	if r.Method != http.MethodGet {
-		respondWithError(w, http.StatusMethodNotAllowed, "Only GET requests are allowed")
-		return
-	}
+	var urlParam, format, quality string
+	if r.Method == http.MethodGet {
+        // Extract parameters from URL query
+        urlParam = r.URL.Query().Get("url")
+        format = r.URL.Query().Get("format")
+        quality = r.URL.Query().Get("quality")
+    } else if r.Method == http.MethodPost {
+        // Extract parameters from POST body
+        var params struct {
+            URL     string `json:"url"`
+            Format  string `json:"format"`
+            Quality string `json:"quality"`
+        }
+        err := json.NewDecoder(r.Body).Decode(&params)
+        if err != nil {
+            respondWithError(w, http.StatusBadRequest, "Invalid JSON body")
+            return
+        }
+        urlParam = params.URL
+        format = params.Format
+        quality = params.Quality
+    } else {
+        respondWithError(w, http.StatusMethodNotAllowed, "Method not allowed")
+        return
+    }
 
-	// Extract URL parameter
-	urlParam := r.URL.Query().Get("url")
 	if urlParam == "" {
 		respondWithError(w, http.StatusBadRequest, "URL parameter is missing")
 		return
 	}
-
-	// format := r.URL.Query().Get("format")
-    // quality := r.URL.Query().Get("quality")
 
 	// Validate URL
 	_, err := url.ParseRequestURI(urlParam)
@@ -71,10 +86,3 @@ func respondWithError(w http.ResponseWriter, statusCode int, message string) {
 		http.Error(w, "Failed to encode error response", http.StatusInternalServerError)
 	}
 }
-
-// TODO: Implement a function to limit the size of the extracted data if necessary
-// func limitDataSize(data interface{}) interface{} {
-//     // Implement logic to limit the size of the data
-//     // This could involve truncating large text fields, limiting the number of items in arrays, etc.
-//     return data
-// }
