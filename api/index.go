@@ -26,8 +26,8 @@ func Handler(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	format := r.URL.Query().Get("format")
-    quality := r.URL.Query().Get("quality")
+	// format := r.URL.Query().Get("format")
+    // quality := r.URL.Query().Get("quality")
 
 	// Validate URL
 	_, err := url.ParseRequestURI(urlParam)
@@ -38,8 +38,8 @@ func Handler(w http.ResponseWriter, r *http.Request) {
 
 	// Initialize options
 	option := extractors.Options{
-		Format: format,
-		Quality: quality,
+		// Format: format,
+		// Quality: quality,
 	}
 
 	// Extract data
