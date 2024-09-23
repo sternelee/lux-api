@@ -37,14 +37,10 @@ func Handler(w http.ResponseWriter, r *http.Request) {
 	}
 
 	// Initialize options
-	option := extractors.Options{}
-
-	if format != "" {
-        option.Format = format
-    }
-    if quality != "" {
-        option.Quality = quality
-    }
+	option := extractors.Options{
+		Format: format,
+		Quality: quality,
+	}
 
 	// Extract data
 	data, err := extractors.Extract(urlParam, option)
