@@ -13,18 +13,14 @@ func Handler(w http.ResponseWriter, r *http.Request) {
 	// Set response header to JSON
 	w.Header().Set("Content-Type", "application/json")
 
-	var urlParam, format, quality string
+	var urlParam string
 	if r.Method == http.MethodGet {
         // Extract parameters from URL query
         urlParam = r.URL.Query().Get("url")
-        format = r.URL.Query().Get("format")
-        quality = r.URL.Query().Get("quality")
     } else if r.Method == http.MethodPost {
         // Extract parameters from POST body
         var params struct {
             URL     string `json:"url"`
-            Format  string `json:"format"`
-            Quality string `json:"quality"`
         }
         err := json.NewDecoder(r.Body).Decode(&params)
         if err != nil {
@@ -32,8 +28,6 @@ func Handler(w http.ResponseWriter, r *http.Request) {
             return
         }
         urlParam = params.URL
-        format = params.Format
-        quality = params.Quality
     } else {
         respondWithError(w, http.StatusMethodNotAllowed, "Method not allowed")
         return
