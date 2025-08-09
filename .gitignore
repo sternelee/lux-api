@@ -35,3 +35,15 @@ annie_*
 *.webm
 
 lux
+
+# SST and AWS Lambda related
+bootstrap
+.sst/
+node_modules/
+.env
+.env.local
+.env.production
+
+# Build artifacts
+*.zip
+*.tar.gz

@@ -57,3 +57,8 @@ require (
 	google.golang.org/protobuf v1.36.6 // indirect
 	gopkg.in/sourcemap.v1 v1.0.5 // indirect
 )
+
+require (
+	github.com/aws/aws-lambda-go v1.47.0
+	github.com/sst/sst/v3 v3.4.24-0.20241218234311-d6f5cc752318
+)
