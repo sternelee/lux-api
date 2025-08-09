@@ -1,0 +1,28 @@
+{
+  "name": "lux-api",
+  "version": "1.0.0",
+  "description": "Lux API for Cloudflare Workers with Go WASM",
+  "main": "index.js",
+  "scripts": {
+    "build": "./build-wasm.sh",
+    "dev": "wrangler dev",
+    "deploy": "wrangler publish",
+    "test": "echo \"No tests yet\""
+  },
+  "keywords": [
+    "lux",
+    "video",
+    "extractor",
+    "cloudflare-workers",
+    "wasm",
+    "go"
+  ],
+  "author": "",
+  "license": "MIT",
+  "devDependencies": {
+    "wrangler": "^3.0.0"
+  },
+  "engines": {
+    "node": ">=16.0.0"
+  }
+}
