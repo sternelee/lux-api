@@ -59,8 +59,8 @@ func main() {
 	r := gin.Default()
 	api := r.Group("/api")
 	{
-		api.GET("/extract", func(c *gin.Context) {
-			url := c.Query("url")
+		api.POST("/extract", func(c *gin.Context) {
+			url := c.PostForm("url")
 			if url == "" {
 				c.JSON(http.StatusBadRequest, gin.H{
 					"error": "url is required",
