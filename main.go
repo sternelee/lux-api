@@ -1,6 +1,8 @@
 package main
 
 import (
+	"context"
+	"encoding/json"
 	"net/http"
 
 	"github.com/gin-gonic/gin"
@@ -29,7 +31,42 @@ import (
 	"github.com/iawia002/lux/extractors/xvideos"
 	"github.com/iawia002/lux/extractors/youtube"
 	"github.com/iawia002/lux/extractors/youku"
+	"github.com/modelcontextprotocol/go-sdk/mcp"
 )
+
+type HiParams struct {
+	Name string `json:"name" jsonschema:"the name of the person to greet"`
+}
+
+func SayHi(ctx context.Context, req *mcp.ServerRequest[*mcp.CallToolParamsFor[HiParams]]) (*mcp.CallToolResultFor[any], error) {
+	return &mcp.CallToolResultFor[any]{
+		Content: []mcp.Content{&mcp.TextContent{Text: "Hi " + req.Params.Arguments.Name}},
+	}, nil
+}
+
+type ExtractMediaParams struct {
+	URL string `json:"url" jsonschema:"the URL of the page to extract media from"`
+}
+
+func ExtractMedia(ctx context.Context, req *mcp.ServerRequest[*mcp.CallToolParamsFor[ExtractMediaParams]]) (*mcp.CallToolResultFor[any], error) {
+	data, err := extractors.Extract(req.Params.Arguments.URL, extractors.Options{})
+	if err != nil {
+		return &mcp.CallToolResultFor[any]{
+			Content: []mcp.Content{&mcp.TextContent{Text: "Extraction failed: " + err.Error()}},
+		}, nil
+	}
+
+	jsonData, err := json.MarshalIndent(data, "", "  ")
+	if err != nil {
+		return &mcp.CallToolResultFor[any]{
+			Content: []mcp.Content{&mcp.TextContent{Text: "Failed to format result as JSON: " + err.Error()}},
+		}, nil
+	}
+
+	return &mcp.CallToolResultFor[any]{
+		Content: []mcp.Content{&mcp.TextContent{Text: string(jsonData)}},
+	}, nil
+}
 
 func main() {
 	extractors.Register("bilibili", bilibili.New())
@@ -56,6 +93,10 @@ func main() {
 	extractors.Register("xvideos", xvideos.New())
 	extractors.Register("youtube", youtube.New())
 	extractors.Register("youku", youku.New())
+
+	mcpServer := mcp.NewServer(&mcp.Implementation{Name: "lux-mcp-server", Version: "v1.0.0"}, nil)
+	mcp.AddTool(mcpServer, &mcp.Tool{Name: "extract_media", Description: "Extracts video or image data from a URL"}, ExtractMedia)
+
 	r := gin.Default()
 	api := r.Group("/api")
 	{
@@ -77,7 +118,14 @@ func main() {
 			}
 			c.JSON(http.StatusOK, data)
 		})
+
+		handler := mcp.NewSSEHandler(func(request *http.Request) *mcp.Server {
+			return mcpServer
+		})
+		mcpRoute := "/sse/*service"
+		api.GET(mcpRoute, gin.WrapH(handler))
+		api.POST(mcpRoute, gin.WrapH(handler))
 	}
 
-	r.Run(":8080") // listen and serve on 0.0.0.0:8080
+	r.Run(":8082") // listen and serve on 0.0.0.0:8082
 }

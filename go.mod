@@ -16,6 +16,7 @@ require (
 	github.com/json-iterator/go v1.1.12
 	github.com/kkdai/youtube/v2 v2.10.4
 	github.com/kr/pretty v0.3.1
+	github.com/modelcontextprotocol/go-sdk v0.2.1-0.20250815204809-1afdb1f27309
 	github.com/pkg/errors v0.9.1
 	github.com/robertkrimen/otto v0.5.1
 	github.com/urfave/cli/v2 v2.27.7
@@ -45,6 +46,7 @@ require (
 	github.com/goccy/go-json v0.10.2 // indirect
 	github.com/golang/groupcache v0.0.0-20241129210726-2c02b8208cf8 // indirect
 	github.com/golang/protobuf v1.5.4 // indirect
+	github.com/google/jsonschema-go v0.2.0 // indirect
 	github.com/google/pprof v0.0.0-20250629210550-e611ec304b22 // indirect
 	github.com/itchyny/timefmt-go v0.1.6 // indirect
 	github.com/kennygrant/sanitize v1.2.4 // indirect
@@ -66,6 +68,7 @@ require (
 	github.com/twitchyliquid64/golang-asm v0.15.1 // indirect
 	github.com/ugorji/go/codec v1.2.12 // indirect
 	github.com/xrash/smetrics v0.0.0-20240521201337-686a1a2994c1 // indirect
+	github.com/yosida95/uritemplate/v3 v3.0.2 // indirect
 	golang.org/x/arch v0.8.0 // indirect
 	golang.org/x/crypto v0.39.0 // indirect
 	golang.org/x/net v0.41.0 // indirect
