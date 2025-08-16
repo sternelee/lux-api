@@ -6,6 +6,7 @@ import (
 	"net/http"
 
 	"github.com/gin-gonic/gin"
+	"github.com/iawia002/lux/utils"
 	"github.com/iawia002/lux/extractors"
 	"github.com/iawia002/lux/extractors/bilibili"
 	"github.com/iawia002/lux/extractors/douyin"
@@ -48,6 +49,10 @@ type ExtractMediaParams struct {
 	URL string `json:"url" jsonschema:"the URL of the page to extract media from"`
 }
 
+type ExtractLinksParams struct {
+	Text string `json:"text" jsonschema:"the text to extract links from"`
+}
+
 func ExtractMedia(ctx context.Context, req *mcp.ServerRequest[*mcp.CallToolParamsFor[ExtractMediaParams]]) (*mcp.CallToolResultFor[any], error) {
 	data, err := extractors.Extract(req.Params.Arguments.URL, extractors.Options{})
 	if err != nil {
@@ -57,6 +62,31 @@ func ExtractMedia(ctx context.Context, req *mcp.ServerRequest[*mcp.CallToolParam
 	}
 
 	jsonData, err := json.MarshalIndent(data, "", "  ")
+	if err != nil {
+		return &mcp.CallToolResultFor[any]{
+			Content: []mcp.Content{&mcp.TextContent{Text: "Failed to format result as JSON: " + err.Error()}},
+		}, nil
+	}
+
+	return &mcp.CallToolResultFor[any]{
+		Content: []mcp.Content{&mcp.TextContent{Text: string(jsonData)}},
+	}, nil
+}
+
+func ExtractLinks(ctx context.Context, req *mcp.ServerRequest[*mcp.CallToolParamsFor[ExtractLinksParams]]) (*mcp.CallToolResultFor[any], error) {
+	text := req.Params.Arguments.Text
+	links := utils.ExtractLinks(text)
+	firstLink := ""
+	if len(links) > 0 {
+		firstLink = links[0]
+	}
+
+	result := map[string]interface{}{
+		"links":      links,
+		"first_link": firstLink,
+	}
+
+	jsonData, err := json.MarshalIndent(result, "", "  ")
 	if err != nil {
 		return &mcp.CallToolResultFor[any]{
 			Content: []mcp.Content{&mcp.TextContent{Text: "Failed to format result as JSON: " + err.Error()}},
@@ -96,27 +126,64 @@ func main() {
 
 	mcpServer := mcp.NewServer(&mcp.Implementation{Name: "lux-mcp-server", Version: "v1.0.0"}, nil)
 	mcp.AddTool(mcpServer, &mcp.Tool{Name: "extract_media", Description: "Extracts video or image data from a URL"}, ExtractMedia)
+	mcp.AddTool(mcpServer, &mcp.Tool{Name: "extract_links", Description: "Extracts links from text content"}, ExtractLinks)
 
 	r := gin.Default()
 	api := r.Group("/api")
 	{
 		api.POST("/extract", func(c *gin.Context) {
 			url := c.PostForm("url")
-			if url == "" {
-				c.JSON(http.StatusBadRequest, gin.H{
-					"error": "url is required",
+			text := c.PostForm("text")
+			
+			// 如果提供了URL，直接使用URL进行提取
+			if url != "" {
+				data, err := extractors.Extract(url, extractors.Options{})
+				if err != nil {
+					c.JSON(http.StatusInternalServerError, gin.H{
+						"error": err.Error(),
+					})
+					return
+				}
+				c.JSON(http.StatusOK, data)
+				return
+			}
+			
+			// 如果没有URL但有text，尝试从text中提取链接
+			if text != "" {
+				links := utils.ExtractLinks(text)
+				if len(links) == 0 {
+					c.JSON(http.StatusBadRequest, gin.H{
+						"error": "no links found in text",
+					})
+					return
+				}
+				
+				// 使用第一个链接进行提取
+				firstLink := links[0]
+				data, err := extractors.Extract(firstLink, extractors.Options{})
+				if err != nil {
+					// 如果提取失败，返回提取到的链接信息
+					c.JSON(http.StatusOK, gin.H{
+						"links":      links,
+						"first_link": firstLink,
+						"error":      err.Error(),
+					})
+					return
+				}
+				
+				// 提取成功，返回提取结果和链接信息
+				c.JSON(http.StatusOK, gin.H{
+					"data":       data,
+					"links":      links,
+					"first_link": firstLink,
 				})
 				return
 			}
-
-			data, err := extractors.Extract(url, extractors.Options{})
-			if err != nil {
-				c.JSON(http.StatusInternalServerError, gin.H{
-					"error": err.Error(),
-				})
-				return
-			}
-			c.JSON(http.StatusOK, data)
+			
+			// 如果既没有URL也没有text，返回错误
+			c.JSON(http.StatusBadRequest, gin.H{
+				"error": "either url or text parameter is required",
+			})
 		})
 
 		handler := mcp.NewSSEHandler(func(request *http.Request) *mcp.Server {
