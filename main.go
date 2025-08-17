@@ -33,6 +33,7 @@ import (
 	"github.com/iawia002/lux/extractors/youtube"
 	"github.com/iawia002/lux/extractors/youku"
 	"github.com/modelcontextprotocol/go-sdk/mcp"
+	"github.com/syumai/workers"
 )
 
 type HiParams struct {
@@ -194,5 +195,5 @@ func main() {
 		api.POST(mcpRoute, gin.WrapH(handler))
 	}
 
-	r.Run(":8082") // listen and serve on 0.0.0.0:8082
+	workers.Serve(r)
 }

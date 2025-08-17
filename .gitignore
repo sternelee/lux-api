@@ -35,3 +35,6 @@ annie_*
 *.webm
 
 lux
+node_modules
+.wrangler
+build
