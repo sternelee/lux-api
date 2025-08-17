@@ -3,16 +3,9 @@ package handler
 import (
 	"encoding/json"
 	"net/http"
-	"sync"
 
 	"github.com/iawia002/lux/extractors"
 	"github.com/iawia002/lux/utils"
-	"github.com/modelcontextprotocol/go-sdk/mcp"
-)
-
-var (
-	once sync.Once
-	mux  *http.ServeMux
 )
 
 // Helper function for JSON responses
@@ -22,7 +15,8 @@ func writeJSON(w http.ResponseWriter, statusCode int, data interface{}) {
 	json.NewEncoder(w).Encode(data)
 }
 
-func extractHandler(w http.ResponseWriter, r *http.Request) {
+// Handler for the /api/extract endpoint
+func Handler(w http.ResponseWriter, r *http.Request) {
 	if r.Method != http.MethodPost {
 		writeJSON(w, http.StatusMethodNotAllowed, map[string]string{"error": "Method not allowed"})
 		return
@@ -78,19 +72,4 @@ func extractHandler(w http.ResponseWriter, r *http.Request) {
 
 	// If neither URL nor text is provided, return an error
 	writeJSON(w, http.StatusBadRequest, map[string]string{"error": "either url or text parameter is required"})
-}
-
-func initialize() {
-	mux = http.NewServeMux()
-	mux.HandleFunc("/api/extract", extractHandler)
-
-	mcpHandler := mcp.NewSSEHandler(func(request *http.Request) *mcp.Server {
-		return initializeMCP()
-	})
-	mux.Handle("/api/sse/", mcpHandler)
-}
-
-func Handler(w http.ResponseWriter, r *http.Request) {
-	once.Do(initialize)
-	mux.ServeHTTP(w, r)
 }
