@@ -74,7 +74,7 @@ func writeJSON(w http.ResponseWriter, statusCode int, data interface{}) {
 func Handler(w http.ResponseWriter, r *http.Request) {
 	// Initialize extractors once
 	once.Do(initializeExtractors)
-	
+
 	if r.Method != http.MethodPost {
 		writeJSON(w, http.StatusMethodNotAllowed, map[string]string{"error": "Method not allowed"})
 		return
